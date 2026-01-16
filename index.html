@@ -6,6 +6,7 @@
     <title>淡江電機課表 App</title>
     <link rel="manifest" href="manifest.json">
     <style>
+        /* 基礎樣式設定 */
         body { font-family: sans-serif; background: #f4f7f6; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
         input { width: 85%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
@@ -66,6 +67,7 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // 正確金鑰：已修正 OO 為 O0，以及大小寫
         const firebaseConfig = {
             apiKey: "AIzaSyDYW7X6O0lPrZRFlBuglb6i1MMVNdkyH1k",
             authDomain: "tkuee-timetable.firebaseapp.com",
@@ -79,23 +81,25 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // 登入與註冊邏輯
         window.handleAuth = async (type) => {
             const email = document.getElementById('email').value;
             const pw = document.getElementById('pw').value;
-            if (!email || !pw) return alert("請輸入完整帳號密碼");
+            if (!email || !pw) return alert("請輸入帳號密碼");
             try {
                 if (type === 'signup') {
                     await createUserWithEmailAndPassword(auth, email, pw);
-                    alert("註冊成功！歡迎使用");
+                    alert("註冊成功！");
                 } else {
                     await signInWithEmailAndPassword(auth, email, pw);
-                    alert("登入成功！正在同步雲端資料...");
+                    alert("登入成功！");
                 }
             } catch (e) { alert("驗證錯誤: " + e.message); }
         };
 
         window.handleLogout = () => signOut(auth).then(() => location.reload());
 
+        // 監聽登入狀態：自動載入個人課表
         onAuthStateChanged(auth, async (user) => {
             const info = document.getElementById('user-info');
             const logoutBtn = document.getElementById('logout-btn');
@@ -110,6 +114,7 @@
             }
         });
 
+        // 儲存至 Firestore
         window.saveToCloud = async () => {
             if (!auth.currentUser) return alert("請先登入才能儲存到雲端！");
             const tableHTML = document.getElementById('timetable-body').innerHTML;
@@ -122,6 +127,7 @@
             } catch (e) { alert("儲存失敗: " + e.message); }
         };
 
+        // 搜尋同學課表
         window.searchFriend = async () => {
             const friendEmail = document.getElementById('search-email').value;
             if (!friendEmail) return alert("請輸入 Email");
@@ -131,9 +137,9 @@
                     document.getElementById('timetable-body').innerHTML = docSnap.data().html;
                     alert("🔍 已顯示 " + friendEmail + " 的課表");
                 } else {
-                    alert("找不到該 Email 的課表。");
+                    alert("找不到該同學的課表。");
                 }
-            } catch (e) { alert("搜尋出錯: " + e.message); }
+            } catch (e) { alert("搜尋失敗: " + e.message); }
         };
     </script>
 </body>
