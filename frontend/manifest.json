@@ -1,0 +1,15 @@
+{
+  "short_name": "TKU課表",
+  "name": "淡江電機個人課表 App",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2648/2648931.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#34495e",
+  "background_color": "#ffffff"
+}
