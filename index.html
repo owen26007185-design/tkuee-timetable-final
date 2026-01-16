@@ -6,21 +6,21 @@
     <title>淡江電機課表 App</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        /* 這裡保留你原本的 CSS 樣式 */
         body { font-family: sans-serif; background: #f4f7f6; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-        input { width: 80%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
-        button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        input { width: 85%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+        button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .primary-btn { background: #3498db; color: white; }
-        .success-btn { background: #2ecc71; color: white; width: 100%; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { border: 1px solid #eee; padding: 10px; text-align: center; }
+        .success-btn { background: #2ecc71; color: white; width: 100%; margin-top: 15px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
         th { background: #34495e; color: white; }
+        .user-label { font-size: 14px; color: #7f8c8d; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2>淡江電機個人課表</h2>
+    <h2 style="color: #2c3e50;">淡江電機個人課表</h2>
 
     <div class="card" id="auth-section">
         <h3 style="margin-top:0">🔐 帳號登入/註冊</h3>
@@ -28,16 +28,16 @@
         <input type="password" id="pw" placeholder="密碼 (至少6位數)">
         <div style="display: flex; gap: 10px; margin-top: 10px;">
             <button class="primary-btn" style="flex:1" onclick="handleAuth('login')">登入</button>
-            <button style="flex:1" onclick="handleAuth('signup')">註冊</button>
+            <button style="flex:1; background: #95a5a6; color: white;" onclick="handleAuth('signup')">註冊</button>
         </div>
-        <p id="user-info" style="font-size: 12px; color: #7f8c8d; margin-top: 10px;"></p>
-        <button id="logout-btn" style="display:none; width: 100%; margin-top: 5px;" onclick="handleLogout()">登出</button>
+        <p id="user-info" class="user-label">狀態：尚未登入</p>
+        <button id="logout-btn" style="display:none; width: 100%; background: #e74c3c; color: white; margin-top: 10px;" onclick="handleLogout()">登出帳號</button>
     </div>
 
     <div class="card">
         <h3 style="margin-top:0">🔍 搜尋同學課表</h3>
-        <div style="display: flex; gap: 5px;">
-            <input type="email" id="search-email" placeholder="輸入同學的 Email" style="flex:1">
+        <div style="display: flex; gap: 8px;">
+            <input type="email" id="search-email" placeholder="輸入同學的 Email" style="flex:1; margin:0">
             <button class="primary-btn" onclick="searchFriend()">搜尋</button>
         </div>
     </div>
@@ -50,13 +50,15 @@
                 </tr>
             </thead>
             <tbody id="timetable-body">
-                <tr>
-                    <td style="background:#f9f9f9">1</td>
-                    <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
-                </tr>
-                </tbody>
+                <script>
+                    const tbody = document.getElementById('timetable-body');
+                    for(let i=1; i<=9; i++) {
+                        tbody.innerHTML += `<tr><td style="background:#f9f9f9">${i}</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>`;
+                    }
+                </script>
+            </tbody>
         </table>
-        <button class="success-btn" onclick="saveToCloud()">💾 儲存課表到雲端</button>
+        <button class="success-btn" onclick="saveToCloud()">💾 儲存變更到雲端</button>
     </div>
 
     <script type="module">
@@ -64,7 +66,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 自動填入你截圖中的金鑰
         const firebaseConfig = {
             apiKey: "AIzaSyDYW7X6O0lPrZRFlBuglb6i1MMVNdkyH1k",
             authDomain: "tkuee-timetable.firebaseapp.com",
@@ -78,66 +79,62 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // A. 處理登入與註冊
         window.handleAuth = async (type) => {
             const email = document.getElementById('email').value;
             const pw = document.getElementById('pw').value;
-            if (!email || !pw) return alert("請輸入帳號密碼");
+            if (!email || !pw) return alert("請輸入完整帳號密碼");
             try {
                 if (type === 'signup') {
                     await createUserWithEmailAndPassword(auth, email, pw);
-                    alert("註冊成功！");
+                    alert("註冊成功！歡迎使用");
                 } else {
                     await signInWithEmailAndPassword(auth, email, pw);
-                    alert("登入成功！");
+                    alert("登入成功！正在同步雲端資料...");
                 }
-            } catch (e) { alert("錯誤: " + e.message); }
+            } catch (e) { alert("驗證錯誤: " + e.message); }
         };
 
-        // B. 登出
-        window.handleLogout = () => signOut(auth);
+        window.handleLogout = () => signOut(auth).then(() => location.reload());
 
-        // C. 監聽登入狀態：登入後自動抓取雲端課表
         onAuthStateChanged(auth, async (user) => {
             const info = document.getElementById('user-info');
             const logoutBtn = document.getElementById('logout-btn');
             if (user) {
                 info.innerText = "目前登入: " + user.email;
+                info.style.color = "#2ecc71";
                 logoutBtn.style.display = "block";
-                // 從 Firestore 抓資料
                 const docSnap = await getDoc(doc(db, "schedules", user.email));
                 if (docSnap.exists()) {
                     document.getElementById('timetable-body').innerHTML = docSnap.data().html;
                 }
-            } else {
-                info.innerText = "尚未登入，資料將僅存在本機";
-                logoutBtn.style.display = "none";
             }
         });
 
-        // D. 雲端儲存：將課表 HTML 存進 Firestore
         window.saveToCloud = async () => {
             if (!auth.currentUser) return alert("請先登入才能儲存到雲端！");
             const tableHTML = document.getElementById('timetable-body').innerHTML;
-            await setDoc(doc(db, "schedules", auth.currentUser.email), {
-                html: tableHTML,
-                updatedAt: new Date()
-            });
-            alert("✅ 雲端同步成功！");
+            try {
+                await setDoc(doc(db, "schedules", auth.currentUser.email), {
+                    html: tableHTML,
+                    updatedAt: new Date()
+                });
+                alert("✅ 雲端同步成功！");
+            } catch (e) { alert("儲存失敗: " + e.message); }
         };
 
-        // E. 搜尋好友功能：輸入 Email 抓取對方的 HTML
         window.searchFriend = async () => {
             const friendEmail = document.getElementById('search-email').value;
             if (!friendEmail) return alert("請輸入 Email");
-            const docSnap = await getDoc(doc(db, "schedules", friendEmail));
-            if (docSnap.exists()) {
-                document.getElementById('timetable-body').innerHTML = docSnap.data().html;
-                alert("🔍 成功抓取 " + friendEmail + " 的課表！");
-            } else {
-                alert("找不到這位同學的課表，請確認 Email 是否正確。");
-            }
+            try {
+                const docSnap = await getDoc(doc(db, "schedules", friendEmail));
+                if (docSnap.exists()) {
+                    document.getElementById('timetable-body').innerHTML = docSnap.data().html;
+                    alert("🔍 已顯示 " + friendEmail + " 的課表");
+                } else {
+                    alert("找不到該 Email 的課表。");
+                }
+            } catch (e) { alert("搜尋出錯: " + e.message); }
         };
     </script>
 </body>
-</html> 
+</html>
