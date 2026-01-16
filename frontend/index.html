@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>淡江電機課表 - 網頁版</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --bg-color: #f4f7f6;
+            --save-btn-color: #27ae60;
+        }
+
+        body {
+            font-family: 'Segoe UI', Microsoft JhengHei, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 { color: var(--primary-color); margin-bottom: 5px; }
+        .subtitle { color: #7f8c8d; margin-bottom: 20px; }
+
+        /* 表格樣式 */
+        table {
+            border-collapse: collapse;
+            width: 95%;
+            max-width: 900px;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            border: 1px solid #eee;
+            padding: 12px;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        /* 節次欄位樣式 */
+        .period {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #636e72;
+            width: 100px;
+            font-size: 0.85rem;
+        }
+
+        /* 編輯狀態提示 */
+        td[contenteditable="true"] {
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        td[contenteditable="true"]:focus {
+            background-color: #fff9db;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        /* 中午休息列 */
+        .lunch-break {
+            background-color: #f1f2f6;
+            color: #a4b0be;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+
+        /* 按鈕樣式 */
+        .btn-container { margin-top: 30px; }
+        .save-btn {
+            padding: 15px 40px;
+            background-color: var(--save-btn-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .save-btn:hover {
+            background-color: #219150;
+            transform: translateY(-2px);
+        }
+        .save-btn:active { transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+    <h1>淡江電機個人課表</h1>
+    <p class="subtitle">點擊格子即可輸入內容，記得點擊下方「儲存」</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>節次</th>
+                <th>週一</th>
+                <th>週二</th>
+                <th>週三</th>
+                <th>週四</th>
+                <th>週五</th>
+            </tr>
+        </thead>
+        <tbody id="timetable-body">
+            <tr><td class="period">08:10 (1)</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            <tr><td class="period">09:10 (2)</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            <tr><td class="period">10:10 (3)</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            <tr><td class="period">11:10 (4)</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            
+            <tr class="lunch-break"><td class="period">12:10 (L)</td><td colspan="5">LUNCH BREAK</td></tr>
+
+            <tr><td class="period">13:10 (5)</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            <tr><td class="period">14:10 (6)</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            <tr><td class="period">15:10 (7)</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            <tr><td class="period">16:10 (8)</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+            <tr><td class="period">17:10 (9)</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+        </tbody>
+    </table>
+
+    <div class="btn-container">
+        <button class="save-btn" onclick="saveMySchedule()">💾 儲存我的課表</button>
+    </div>
+
+    <script>
+        // 儲存邏輯
+        function saveMySchedule() {
+            const tableHTML = document.getElementById('timetable-body').innerHTML;
+            localStorage.setItem('tkuee_schedule', tableHTML);
+            alert('課表已成功存到瀏覽器！');
+        }
+
+        // 讀取邏輯
+        window.onload = function() {
+            const savedData = localStorage.getItem('tkuee_schedule');
+            if (savedData) {
+                document.getElementById('timetable-body').innerHTML = savedData;
+            }
+        }
+    </script>
+
+</body>
+</html>
