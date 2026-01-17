@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>淡江電機課表 App - V4</title> <style>
+    <title>淡江電機課表 App - V4</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#34495e">
+
+    <style>
         body { font-family: sans-serif; background: #f4f7f6; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
         input { width: 85%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
@@ -16,8 +22,6 @@
         .user-label { font-size: 14px; color: #7f8c8d; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
-<link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
 <body>
 
     <h2 style="color: #2c3e50;">淡江電機個人課表</h2>
@@ -66,7 +70,6 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 精確金鑰校對：已修正大小寫與數字 0
         const firebaseConfig = {
             apiKey: "AIzaSyDYw7X6OOlPrZRFlBuglb6i1MMvNdkyH1k",
             authDomain: "tkuee-timetable.firebaseapp.com",
@@ -137,6 +140,17 @@
             } catch (e) { alert("搜尋失敗: " + e.message); }
         };
     </script>
-    </body>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker 註冊成功', reg))
+                    .catch(err => console.log('Service Worker 註冊失敗', err));
+            });
+        }
+    </script>
+
+</body>
 </html>
-""
+
