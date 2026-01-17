@@ -1,6 +1,6 @@
 {
-  "short_name": "TKU課表",
-  "name": "淡江電機個人課表 App",
+  "short_name": "課表",
+  "name": "個人課表 App",
   "description": "提供淡江電機系學生管理個人課表與查詢同學課表的應用程式",
   "icons": [
     {
