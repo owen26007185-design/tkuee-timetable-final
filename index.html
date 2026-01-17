@@ -17,9 +17,11 @@
         .primary-btn { background: #3498db; color: white; }
         .success-btn { background: #2ecc71; color: white; width: 100%; margin-top: 15px; font-size: 16px; }
         table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: center; font-size: 14px; }
         th { background: #34495e; color: white; }
         .user-label { font-size: 14px; color: #7f8c8d; margin-top: 5px; font-weight: bold; }
+        /* 讓時間顯示的小一點 */
+        .time-label { font-size: 10px; color: #95a5a6; display: block; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -56,8 +58,24 @@
             <tbody id="timetable-body">
                 <script>
                     const tbody = document.getElementById('timetable-body');
+                    // 淡江大學節次時間表
+                    const times = [
+                        "08:10", "09:10", "10:10", "11:10", 
+                        "13:10", "14:10", "15:10", "16:10", "17:10"
+                    ];
                     for(let i=1; i<=9; i++) {
-                        tbody.innerHTML += `<tr><td style="background:#f9f9f9">${i}</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>`;
+                        tbody.innerHTML += `
+                            <tr>
+                                <td style="background:#f9f9f9">
+                                    <b>${i}</b>
+                                    <span class="time-label">${times[i-1]}</span>
+                                </td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                                <td contenteditable="true"></td>
+                            </tr>`;
                     }
                 </script>
             </tbody>
