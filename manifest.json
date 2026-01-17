@@ -4,22 +4,21 @@
   "description": "提供淡江電機系學生管理個人課表與查詢同學課表的應用程式",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2648/2648931.png",
-      "sizes": "512x512",
+      "src": "icon.png",
+      "sizes": "1042x1042",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2648/2648931.png",
+      "src": "icon.png",
       "sizes": "192x192",
       "type": "image/png"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": ".",
   "display": "standalone",
   "theme_color": "#34495e",
   "background_color": "#ffffff",
-  "orientation": "portrait",
-  "scope": "/"
+  "orientation": "portrait"
 }
 
