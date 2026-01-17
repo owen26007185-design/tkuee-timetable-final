@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>課表 App</title>
+    <title>課表</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
     <meta name="theme-color" content="#2c3e50">
 
     <style>
-        /* 整體漸層背景 */
+        /* 保持深色漸層質感 */
         body { 
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%); 
@@ -22,7 +22,6 @@
             padding: 20px 10px;
         }
 
-        /* 登入卡片美化 */
         .card { 
             background: white; 
             padding: 25px; 
@@ -32,16 +31,15 @@
             width: 100%; 
             max-width: 400px; 
             box-sizing: border-box;
-            transition: 0.3s;
         }
 
-        /* 登入介面專屬樣式 */
         .auth-header { text-align: center; margin-bottom: 20px; }
         .auth-logo { width: 80px; height: 80px; border-radius: 18px; margin-bottom: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .auth-title { color: #2c3e50; font-size: 22px; font-weight: bold; margin: 0; }
+        
+        /* 修改後的簡約標題 */
+        .auth-title { color: #2c3e50; font-size: 24px; font-weight: bold; margin: 0; letter-spacing: 2px; }
         .auth-subtitle { color: #7f8c8d; font-size: 13px; margin-top: 5px; }
 
-        /* 輸入框升級 */
         input { 
             width: 100%; 
             padding: 12px 15px; 
@@ -52,27 +50,18 @@
             box-sizing: border-box;
             background: #f8f9fa;
         }
-        input:focus { outline: none; border-color: #3498db; background: white; }
 
-        /* 按鈕美化 */
         button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .primary-btn { background: #3498db; color: white; padding: 12px; font-size: 16px; }
-        .primary-btn:active { transform: scale(0.98); background: #2980b9; }
-        .secondary-btn { background: #f1f2f6; color: #7f8c8d; padding: 10px; font-size: 14px; }
+        .primary-btn { background: #3498db; color: white; padding: 12px; font-size: 16px; width: 100%; margin-top: 10px; }
+        .secondary-btn { background: #f1f2f6; color: #7f8c8d; padding: 10px; font-size: 14px; width: 100%; }
 
-        /* 內容區塊與表格 */
         #main-app { display: none; width: 100%; max-width: 500px; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; table-layout: fixed; }
         th, td { border: 1px solid #eee; padding: 10px 2px; text-align: center; font-size: 13px; }
-        th { background: #34495e; color: white; font-size: 14px; }
+        th { background: #34495e; color: white; }
         .highlight-now { background: #fff3cd !important; border: 2px solid #ffc107 !important; }
-
-        /* 課程顏色 */
-        .type-req { border-left: 4px solid #ef5350; background: #fff5f5; }
-        .type-ele { border-left: 4px solid #42a5f5; background: #f0f7ff; }
-        .type-lab { border-left: 4px solid #66bb6a; background: #f2f9f2; }
     </style>
 </head>
 <body>
@@ -80,29 +69,25 @@
     <div class="card" id="auth-section">
         <div class="auth-header">
             <img src="icon.png" class="auth-logo" alt="Logo">
-            <div class="auth-title">淡江電機課表</div>
-            <div class="auth-subtitle">工程大樓學生專用工具</div>
+            <div class="auth-title">課表</div>
+            <div class="auth-subtitle">個人專屬時間管理工具</div>
         </div>
         
-        <input type="email" id="email" placeholder="學校 Email (帳號)">
-        <input type="password" id="pw" placeholder="設定密碼 (至少6位數)">
+        <input type="email" id="email" placeholder="Email (帳號)">
+        <input type="password" id="pw" placeholder="密碼">
         
-        <button class="primary-btn" style="width: 100%; margin-top: 10px;" onclick="handleAuth('login')">立刻登入</button>
+        <button class="primary-btn" onclick="handleAuth('login')">立刻登入</button>
         
         <div style="display: flex; align-items: center; margin: 20px 0;">
             <div style="flex:1; height:1px; background:#eee;"></div>
-            <div style="margin:0 10px; color:#bdc3c7; font-size:12px;">新同學？</div>
+            <div style="margin:0 10px; color:#bdc3c7; font-size:12px;">新使用者？</div>
             <div style="flex:1; height:1px; background:#eee;"></div>
         </div>
         
-        <button class="secondary-btn" style="width: 100%;" onclick="handleAuth('signup')">註冊新帳號</button>
+        <button class="secondary-btn" onclick="handleAuth('signup')">註冊新帳號</button>
     </div>
 
     <div id="main-app">
-        <div class="card" style="background: rgba(255,255,255,0.9); padding: 15px;">
-            <div id="user-info" style="font-size:12px; color:#2c3e50; font-weight:bold; text-align:center;"></div>
-        </div>
-
         <div class="card" style="padding: 5px;">
             <table id="main-table">
                 <thead>
@@ -110,7 +95,6 @@
                 </thead>
                 <tbody id="timetable-body">
                     <script>
-                        // ... 動態表格生成代碼 ...
                         const tbody = document.getElementById('timetable-body');
                         const times = ["08:10", "09:10", "10:10", "11:10", "12:10", "13:10", "14:10", "15:10", "16:10", "17:10"];
                         for(let i=1; i<=10; i++) {
@@ -125,14 +109,13 @@
                     </script>
                 </tbody>
             </table>
-            <button class="success-btn" style="width:100%; border-radius:12px; padding:15px; margin-top:10px;" onclick="saveToCloud()">💾 同步雲端課表</button>
+            <button class="primary-btn" style="background:#2ecc71; margin-top:10px;" onclick="saveToCloud()">💾 同步雲端課表</button>
         </div>
-
         <button style="background:none; color:white; opacity:0.6; font-size:12px; width:100%; margin-bottom:30px;" onclick="handleLogout()">登出帳號</button>
     </div>
 
     <script type="module">
-        // ... Firebase 邏輯代碼 (保持不變) ...
+        /* Firebase 與邏輯代碼維持不變 */
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -156,7 +139,6 @@
             if (user) {
                 authSection.style.display = 'none';
                 mainApp.style.display = 'block';
-                document.getElementById('user-info').innerText = "👤 " + user.email;
                 const docSnap = await getDoc(doc(db, "schedules", user.email));
                 if (docSnap.exists() && docSnap.data().v6_data) {
                     const cells = document.querySelectorAll('#timetable-body td[data-type]');
@@ -178,16 +160,15 @@
         window.handleAuth = async (type) => {
             const email = document.getElementById('email').value;
             const pw = document.getElementById('pw').value;
-            if(!email || !pw) return alert("請輸入帳號密碼");
             try {
                 if(type === 'signup') await createUserWithEmailAndPassword(auth, email, pw);
                 else await signInWithEmailAndPassword(auth, email, pw);
-            } catch(e) { alert("登入失敗: " + e.message); }
+            } catch(e) { alert("驗證失敗: " + e.message); }
         };
 
         window.handleLogout = () => signOut(auth).then(() => location.reload());
-        window.saveToCloud = async () => { /* 同前儲存邏輯 */ };
-        window.cycleColor = (el) => { /* 同前換色邏輯 */ };
+        window.saveToCloud = async () => { /* 儲存邏輯 */ };
+        window.cycleColor = (el) => { /* 顏色循環邏輯 */ };
     </script>
 </body>
 </html>
