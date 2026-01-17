@@ -21,8 +21,12 @@
         th { background: #34495e; color: white; }
         .user-label { font-size: 14px; color: #7f8c8d; margin-top: 5px; font-weight: bold; }
         .time-label { font-size: 10px; color: #95a5a6; display: block; margin-top: 2px; }
-        /* 午休列的特殊顏色 */
         .lunch-row { background: #fff9e6 !important; color: #d35400; font-weight: bold; font-size: 12px; }
+
+        /* 快捷連結網格樣式 */
+        .link-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .link-btn { background: #ecf0f1; color: #2c3e50; padding: 12px; border-radius: 8px; text-decoration: none; text-align: center; font-size: 13px; font-weight: bold; border: 1px solid #dcdde1; }
+        .link-btn:active { background: #dcdde1; }
     </style>
 </head>
 <body>
@@ -59,33 +63,30 @@
             <tbody id="timetable-body">
                 <script>
                     const tbody = document.getElementById('timetable-body');
-                    // 更新後的時間表：第5節為吃飯，第6節為13:10
                     const times = ["08:10", "09:10", "10:10", "11:10", "12:10", "13:10", "14:10", "15:10", "16:10", "17:10"];
-                    
                     for(let i=1; i<=10; i++) {
                         let label = i;
                         let time = times[i-1];
                         let rowClass = "";
-                        let content = `<td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>`;
-
                         if(i === 5) {
-                            label = "吃飯";
-                            time = "午休";
-                            rowClass = 'class="lunch-row"';
-                        } else if (i > 5) {
-                            label = i - 1; // 讓吃飯後面的標籤維持 5, 6, 7...
-                        }
-
-                        tbody.innerHTML += `
-                            <tr ${rowClass}>
-                                <td style="background:#f9f9f9"><b>${label}</b><span class="time-label">${time}</span></td>
-                                ${content}
-                            </tr>`;
+                            label = "吃飯"; time = "午休"; rowClass = 'class="lunch-row"';
+                        } else if (i > 5) { label = i - 1; }
+                        tbody.innerHTML += `<tr ${rowClass}><td style="background:#f9f9f9"><b>${label}</b><span class="time-label">${time}</span></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>`;
                     }
                 </script>
             </tbody>
         </table>
         <button class="success-btn" onclick="saveToCloud()">💾 儲存變更到雲端</button>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0">🔗 校園快捷連結</h3>
+        <div class="link-grid">
+            <a href="https://iclass.tku.edu.tw/" target="_blank" class="link-btn">淡江 iClass</a>
+            <a href="https://portal.tku.edu.tw/" target="_blank" class="link-btn">個人資訊系統</a>
+            <a href="https://www.ais.tku.edu.tw/elecos/" target="_blank" class="link-btn">選課系統</a>
+            <a href="http://www.ee.tku.edu.tw/" target="_blank" class="link-btn">電機系官網</a>
+        </div>
     </div>
 
     <script type="module">
@@ -108,9 +109,7 @@
 
         const fillTable = (dataArray) => {
             const cells = document.querySelectorAll('#timetable-body td[contenteditable="true"]');
-            dataArray.forEach((text, index) => {
-                if (cells[index]) cells[index].innerText = text || "";
-            });
+            dataArray.forEach((text, index) => { if (cells[index]) cells[index].innerText = text || ""; });
         };
 
         window.handleAuth = async (type) => {
@@ -118,13 +117,8 @@
             const pw = document.getElementById('pw').value;
             if (!email || !pw) return alert("請輸入完整帳號密碼");
             try {
-                if (type === 'signup') {
-                    await createUserWithEmailAndPassword(auth, email, pw);
-                    alert("註冊成功！");
-                } else {
-                    await signInWithEmailAndPassword(auth, email, pw);
-                    alert("登入成功！");
-                }
+                if (type === 'signup') { await createUserWithEmailAndPassword(auth, email, pw); alert("註冊成功！"); }
+                else { await signInWithEmailAndPassword(auth, email, pw); alert("登入成功！"); }
             } catch (e) { alert("驗證錯誤: " + e.message); }
         };
 
@@ -138,9 +132,7 @@
                 info.style.color = "#2ecc71";
                 logoutBtn.style.display = "block";
                 const docSnap = await getDoc(doc(db, "schedules", user.email));
-                if (docSnap.exists() && docSnap.data().cells) {
-                    fillTable(docSnap.data().cells);
-                }
+                if (docSnap.exists() && docSnap.data().cells) { fillTable(docSnap.data().cells); }
             }
         });
 
@@ -149,11 +141,8 @@
             const cells = document.querySelectorAll('#timetable-body td[contenteditable="true"]');
             const cellTexts = Array.from(cells).map(td => td.innerText);
             try {
-                await setDoc(doc(db, "schedules", auth.currentUser.email), {
-                    cells: cellTexts,
-                    updatedAt: new Date()
-                });
-                alert("✅ 雲端同步成功！午休時間已加入。");
+                await setDoc(doc(db, "schedules", auth.currentUser.email), { cells: cellTexts, updatedAt: new Date() });
+                alert("✅ 雲端同步成功！快捷連結已啟用。");
             } catch (e) { alert("儲存失敗: " + e.message); }
         };
 
@@ -162,10 +151,8 @@
             if (!friendEmail) return alert("請輸入 Email");
             try {
                 const docSnap = await getDoc(doc(db, "schedules", friendEmail));
-                if (docSnap.exists() && docSnap.data().cells) {
-                    fillTable(docSnap.data().cells);
-                    alert("🔍 已顯示 " + friendEmail + " 的課表");
-                } else { alert("找不到該課表。"); }
+                if (docSnap.exists() && docSnap.data().cells) { fillTable(docSnap.data().cells); alert("🔍 已顯示 " + friendEmail + " 的課表"); }
+                else { alert("找不到該課表。"); }
             } catch (e) { alert("搜尋失敗: " + e.message); }
         };
     </script>
