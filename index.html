@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>課表 App </title>
+    <title>課表 App</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -16,11 +16,10 @@
         button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .primary-btn { background: #3498db; color: white; }
         .success-btn { background: #2ecc71; color: white; width: 100%; margin-top: 15px; font-size: 16px; }
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
-        th, td { border: 1px solid #eee; padding: 12px; text-align: center; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; table-layout: fixed; }
+        th, td { border: 1px solid #eee; padding: 10px 5px; text-align: center; font-size: 14px; word-break: break-all; }
         th { background: #34495e; color: white; }
         .user-label { font-size: 14px; color: #7f8c8d; margin-top: 5px; font-weight: bold; }
-        /* 讓時間顯示的小一點 */
         .time-label { font-size: 10px; color: #95a5a6; display: block; margin-top: 2px; }
     </style>
 </head>
@@ -48,32 +47,23 @@
         </div>
     </div>
 
-    <div class="card" style="max-width: 100%; overflow-x: auto;">
+    <div class="card" style="max-width: 100%; overflow-x: auto; padding: 10px 5px;">
         <table>
             <thead>
                 <tr>
-                    <th>節次</th><th>週一</th><th>週二</th><th>週三</th><th>週四</th><th>週五</th>
+                    <th style="width: 50px;">節次</th><th>週一</th><th>週二</th><th>週三</th><th>週四</th><th>週五</th>
                 </tr>
             </thead>
             <tbody id="timetable-body">
                 <script>
                     const tbody = document.getElementById('timetable-body');
-                    // 淡江大學節次時間表
-                    const times = [
-                        "08:10", "09:10", "10:10", "11:10", 
-                        "13:10", "14:10", "15:10", "16:10", "17:10"
-                    ];
+                    const times = ["08:10", "09:10", "10:10", "11:10", "13:10", "14:10", "15:10", "16:10", "17:10"];
                     for(let i=1; i<=9; i++) {
                         tbody.innerHTML += `
                             <tr>
-                                <td style="background:#f9f9f9">
-                                    <b>${i}</b>
-                                    <span class="time-label">${times[i-1]}</span>
-                                </td>
-                                <td contenteditable="true"></td>
-                                <td contenteditable="true"></td>
-                                <td contenteditable="true"></td>
-                                <td contenteditable="true"></td>
+                                <td style="background:#f9f9f9"><b>${i}</b><span class="time-label">${times[i-1]}</span></td>
+                                <td contenteditable="true"></td><td contenteditable="true"></td>
+                                <td contenteditable="true"></td><td contenteditable="true"></td>
                                 <td contenteditable="true"></td>
                             </tr>`;
                     }
@@ -101,6 +91,14 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // 核心填入邏輯：只填入文字，不破壞 HTML 結構
+        const fillTable = (dataArray) => {
+            const cells = document.querySelectorAll('#timetable-body td[contenteditable="true"]');
+            dataArray.forEach((text, index) => {
+                if (cells[index]) cells[index].innerText = text || "";
+            });
+        };
+
         window.handleAuth = async (type) => {
             const email = document.getElementById('email').value;
             const pw = document.getElementById('pw').value;
@@ -108,7 +106,7 @@
             try {
                 if (type === 'signup') {
                     await createUserWithEmailAndPassword(auth, email, pw);
-                    alert("註冊成功！歡迎使用");
+                    alert("註冊成功！");
                 } else {
                     await signInWithEmailAndPassword(auth, email, pw);
                     alert("登入成功！");
@@ -126,21 +124,22 @@
                 info.style.color = "#2ecc71";
                 logoutBtn.style.display = "block";
                 const docSnap = await getDoc(doc(db, "schedules", user.email));
-                if (docSnap.exists()) {
-                    document.getElementById('timetable-body').innerHTML = docSnap.data().html;
+                if (docSnap.exists() && docSnap.data().cells) {
+                    fillTable(docSnap.data().cells);
                 }
             }
         });
 
         window.saveToCloud = async () => {
-            if (!auth.currentUser) return alert("請先登入才能儲存到雲端！");
-            const tableHTML = document.getElementById('timetable-body').innerHTML;
+            if (!auth.currentUser) return alert("請先登入才能儲存！");
+            const cells = document.querySelectorAll('#timetable-body td[contenteditable="true"]');
+            const cellTexts = Array.from(cells).map(td => td.innerText);
             try {
                 await setDoc(doc(db, "schedules", auth.currentUser.email), {
-                    html: tableHTML,
+                    cells: cellTexts,
                     updatedAt: new Date()
                 });
-                alert("✅ 雲端同步成功！");
+                alert("✅ 雲端同步成功！時間標籤已固定。");
             } catch (e) { alert("儲存失敗: " + e.message); }
         };
 
@@ -149,12 +148,10 @@
             if (!friendEmail) return alert("請輸入 Email");
             try {
                 const docSnap = await getDoc(doc(db, "schedules", friendEmail));
-                if (docSnap.exists()) {
-                    document.getElementById('timetable-body').innerHTML = docSnap.data().html;
+                if (docSnap.exists() && docSnap.data().cells) {
+                    fillTable(docSnap.data().cells);
                     alert("🔍 已顯示 " + friendEmail + " 的課表");
-                } else {
-                    alert("找不到該 Email 的課表。");
-                }
+                } else { alert("找不到該課表或格式不相容。"); }
             } catch (e) { alert("搜尋失敗: " + e.message); }
         };
     </script>
@@ -162,13 +159,10 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker 註冊成功', reg))
-                    .catch(err => console.log('Service Worker 註冊失敗', err));
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW 失敗', err));
             });
         }
     </script>
-
 </body>
 </html>
 
