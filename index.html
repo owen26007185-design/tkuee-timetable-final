@@ -1,220 +1,99 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>課表</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
-    <meta name="theme-color" content="#2c3e50">
+<style>
+    /* ...原有樣式... */
+    .settings-group { margin-bottom: 15px; text-align: left; }
+    .settings-group label { display: block; font-size: 12px; color: var(--text-sub); margin-bottom: 5px; font-weight: bold; }
+    .read-only-box { background: #eee; padding: 10px; border-radius: 8px; font-size: 13px; color: #666; word-break: break-all; }
+</style>
 
-    <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
-            --card-bg: white;
-            --text-main: #2c3e50;
-            --primary: #3498db;
-        }
+<div class="sidebar" id="sidebar">
+    <h2 style="margin-top:0; color:var(--primary);">功能選單</h2>
+    <div class="sidebar-item" onclick="showSection('timetable-section')">🏠 我的課表首頁</div>
+    <div class="sidebar-item" onclick="showSection('friends-section')">👥 好友名單</div>
+    <div class="sidebar-item" onclick="showSection('requests-section')">💌 好友請求 <span id="req-count"></span></div>
+    <div class="sidebar-item" onclick="showSection('explore-section')">🌍 探索/搜尋好友</div>
+    <div class="sidebar-item" onclick="showSection('settings-section')">⚙️ 個人設定</div>
+    <div class="sidebar-item" onclick="handleLogout()" style="color:#e74c3c; margin-top:30px;">🚪 登出帳號</div>
+</div>
 
-        body.dark-mode {
-            --bg-gradient: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
-            --card-bg: #2d2d2d;
-            --text-main: #ecf0f1;
-        }
-
-        body { 
-            font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-gradient); 
-            min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; transition: 0.3s;
-            color: var(--text-main);
-        }
-
-        /* 🍔 漢堡選單樣式 */
-        .header { width: 100%; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-        .menu-icon { font-size: 24px; color: white; cursor: pointer; }
-
-        .sidebar {
-            position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg);
-            box-shadow: 2px 0 15px rgba(0,0,0,0.3); transition: 0.3s; z-index: 1000; padding: 20px; box-sizing: border-box;
-        }
-        .sidebar.active { left: 0; }
-        .sidebar-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; font-weight: bold; }
-        .sidebar-item:hover { color: var(--primary); }
-
-        .overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); 
-            display: none; z-index: 999; 
-        }
-        .overlay.active { display: block; }
-
-        /* 卡片與內容切換 */
-        .content-section { display: none; width: 100%; max-width: 480px; padding: 10px; box-sizing: border-box; }
-        .content-section.active { display: block; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .card { background: var(--card-bg); padding: 20px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; background: #f9f9f9; }
-        button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .primary-btn { background: var(--primary); color: white; padding: 12px; width: 100%; }
-
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; table-layout: fixed; }
-        th, td { border: 1px solid #eee; padding: 8px 2px; text-align: center; font-size: 12px; }
-        th { background: #34495e; color: white; }
-        .highlight-now { background: #fff3cd !important; border: 2px solid #ffc107 !important; }
-        
-        .type-req { border-left: 4px solid #ef5350; background: #fff5f5; }
-        .type-ele { border-left: 4px solid #42a5f5; background: #f0f7ff; }
-        .type-lab { border-left: 4px solid #66bb6a; background: #f2f9f2; }
-    </style>
-</head>
-<body>
-
-    <div class="header">
-        <div class="menu-icon" onclick="toggleSidebar()">☰</div>
-        <div style="color:white; font-weight:bold; font-size:18px;">課表</div>
-        <div class="menu-icon" onclick="toggleDarkMode()">🌙</div>
-    </div>
-
-    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
-    <div class="sidebar" id="sidebar">
-        <h2 style="margin-top:0; color:var(--primary);">功能選單</h2>
-        <div class="sidebar-item" onclick="showSection('timetable-section')">🏠 我的課表首頁</div>
-        <div class="sidebar-item" onclick="showSection('friends-section')">👥 好友名單</div>
-        <div class="sidebar-item" onclick="showSection('requests-section')">💌 好友請求 <span id="req-count" style="color:red;"></span></div>
-        <div class="sidebar-item" onclick="showSection('explore-section')">🌍 探索/搜尋好友</div>
-        <div class="sidebar-item" onclick="handleLogout()" style="color:#e74c3c; margin-top:30px;">🚪 登出帳號</div>
-    </div>
-
-    <div class="card" id="auth-section" style="margin-top:50px; width:90%; max-width:400px;">
-        <h2 style="text-align:center;">登入使用</h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="pw" placeholder="密碼">
-        <button class="primary-btn" onclick="handleAuth('login')">進入 App</button>
-        <button class="primary-btn" style="background:#95a5a6; margin-top:8px;" onclick="handleAuth('signup')">註冊新帳號</button>
-    </div>
-
-    <div id="main-app" style="display:none; width:100%;">
-        
-        <section id="timetable-section" class="content-section active">
-            <div class="card" style="padding: 5px;">
-                <table id="main-table">
-                    <thead><tr><th style="width: 45px;">節次</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr></thead>
-                    <tbody id="timetable-body">
-                        </tbody>
-                </table>
-                <button class="primary-btn" style="background:#2ecc71; margin-top:10px;" onclick="saveToCloud()">💾 儲存並同步雲端</button>
-            </div>
-            <div class="card">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                    <a href="https://iclass.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; padding:10px; border-radius:8px; text-align:center; color:#333; font-size:12px;">iClass 2.0</a>
-                    <a href="https://sso.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; padding:10px; border-radius:8px; text-align:center; color:#333; font-size:12px;">資訊系統</a>
-                </div>
-            </div>
-        </section>
-
-        <section id="friends-section" class="content-section">
-            <div class="card">
-                <h3>👥 好友名單</h3>
-                <div id="friend-list-container">載入中...</div>
-            </div>
-        </section>
-
-        <section id="requests-section" class="content-section">
-            <div class="card">
-                <h3>💌 收到的請求</h3>
-                <div id="req-list">目前無請求</div>
-            </div>
-        </section>
-
-        <section id="explore-section" class="content-section">
-            <div class="card">
-                <h3>🌍 搜尋新朋友</h3>
-                <input type="email" id="search-email" placeholder="輸入同學 Email">
-                <button class="primary-btn" onclick="searchFriend()">🔍 搜尋並查看</button>
-                <button class="primary-btn" style="background:#f39c12; margin-top:8px;" onclick="sendFriendRequest()">➕ 發送好友請求</button>
-            </div>
-        </section>
-
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDYw7X6OOlPrZRFlBuglb6i1MMvNdkyH1k",
-            authDomain: "tkuee-timetable.firebaseapp.com",
-            projectId: "tkuee-timetable",
-            storageBucket: "tkuee-timetable.firebasestorage.app",
-            messagingSenderId: "12075058527",
-            appId: "1:12075058527:web:c6a3f9e99a6f7e75bb22ea"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // --- 介面切換邏輯 ---
-        window.toggleSidebar = () => {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('overlay').classList.toggle('active');
-        };
-
-        window.showSection = (sectionId) => {
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
-            toggleSidebar();
-        };
-
-        window.toggleDarkMode = () => {
-            document.body.classList.toggle('dark-mode');
-        };
-
-        // --- 核心課表生成 ---
-        const tbody = document.getElementById('timetable-body');
-        const times = ["08:10", "09:10", "10:10", "11:10", "12:10", "13:10", "14:10", "15:10", "16:10", "17:10"];
-        for(let i=1; i<=10; i++) {
-            let label = i; let time = times[i-1];
-            if(i === 5) { label = "休"; time = "午休"; } else if (i > 5) { label = i - 1; }
-            tbody.innerHTML += `<tr data-row="${i}"><td style="background:rgba(0,0,0,0.05);"><b>${label}</b><br><small>${time}</small></td>` + 
-            `<td onclick="cycleColor(this)" data-type="none"><div class="course-name" contenteditable="true"></div><div style="font-size:8px; opacity:0.6" contenteditable="true"></div></td>`.repeat(5) + `</tr>`;
-        }
-
-        // --- 社交功能邏輯 (簡化實作) ---
-        window.sendFriendRequest = async () => {
-            const targetEmail = document.getElementById('search-email').value;
-            if(!targetEmail || targetEmail === auth.currentUser.email) return alert("請輸入有效 Email");
+<div id="main-app" style="display:none; width:100%;">
+    <section id="settings-section" class="content-section">
+        <div class="card">
+            <h3 style="margin-top:0;">⚙️ 個人設定</h3>
             
-            // 在目標對象的檔案中加入「請求者」的 Email
-            await setDoc(doc(db, "schedules", targetEmail), {
-                requests: arrayUnion(auth.currentUser.email)
-            }, { merge: true });
-            alert("✅ 請求已發送！");
+            <div class="settings-group">
+                <label>好友唯一 ID (分享給好友以新增)</label>
+                <div id="display-uid" class="read-only-box">載入中...</div>
+            </div>
+
+            <div class="settings-group">
+                <label>用戶名稱</label>
+                <input type="text" id="set-username" placeholder="請輸入暱稱">
+            </div>
+
+            <div class="settings-group">
+                <label>電子郵件 (不可更改)</label>
+                <div id="display-email" class="read-only-box">--</div>
+            </div>
+
+            <div class="settings-group">
+                <label>學校</label>
+                <input type="text" id="set-school" placeholder="例如：淡江大學" value="淡江大學">
+            </div>
+
+            <div class="settings-group">
+                <label>學號</label>
+                <input type="text" id="set-student-id" placeholder="例如：412xxxxxx">
+            </div>
+
+            <button class="primary-btn" style="background:#2ecc71;" onclick="updateProfile()">💾 儲存設定</button>
+        </div>
+    </section>
+</div>
+
+<script type="module">
+    // ...Firebase 初始化...
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // 儲存/更新個人資料
+    window.updateProfile = async () => {
+        if (!auth.currentUser) return;
+        const profileData = {
+            username: document.getElementById('set-username').value,
+            school: document.getElementById('set-school').value,
+            studentId: document.getElementById('set-student-id').value,
+            email: auth.currentUser.email,
+            uid: auth.currentUser.uid
         };
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                document.getElementById('auth-section').style.display = 'none';
-                document.getElementById('main-app').style.display = 'block';
-                const docSnap = await getDoc(doc(db, "schedules", user.email));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.v6_data) fillTable(data.v6_data);
-                    // 顯示請求數量
-                    const reqs = data.requests || [];
-                    document.getElementById('req-count').innerText = reqs.length > 0 ? `(${reqs.length})` : "";
+        try {
+            // 使用 merge: true 確保不會覆蓋掉課表資料
+            await setDoc(doc(db, "schedules", auth.currentUser.email), {
+                profile: profileData
+            }, { merge: true });
+            alert("✅ 個人設定已更新！");
+        } catch (e) {
+            alert("更新失敗: " + e.message);
+        }
+    };
+
+    // 登入後載入資料
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // 顯示讀取中的資訊
+            document.getElementById('display-uid').innerText = user.uid;
+            document.getElementById('display-email').innerText = user.email;
+
+            const docSnap = await getDoc(doc(db, "schedules", user.email));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                // 填入已有的設定檔
+                if (data.profile) {
+                    document.getElementById('set-username').value = data.profile.username || "";
+                    document.getElementById('set-school').value = data.profile.school || "淡江大學";
+                    document.getElementById('set-student-id').value = data.profile.studentId || "";
                 }
             }
-        });
-
-        // 保持原有的 saveToCloud, cycleColor, fillTable 等函式
-        window.handleAuth = async (type) => { /* 原有登入邏輯 */ };
-        window.saveToCloud = async () => { /* 原有儲存邏輯 */ };
-        window.handleLogout = () => signOut(auth).then(() => location.reload());
-        window.cycleColor = (el) => { /* 原有換色邏輯 */ };
-        function fillTable(data) { /* 原有填入邏輯 */ }
-    </script>
-</body>
-</html>
+        }
+    });
+</script>
 
