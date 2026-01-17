@@ -21,6 +21,8 @@
         th { background: #34495e; color: white; }
         .user-label { font-size: 14px; color: #7f8c8d; margin-top: 5px; font-weight: bold; }
         .time-label { font-size: 10px; color: #95a5a6; display: block; margin-top: 2px; }
+        /* 午休列的特殊顏色 */
+        .lunch-row { background: #fff9e6 !important; color: #d35400; font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -57,14 +59,27 @@
             <tbody id="timetable-body">
                 <script>
                     const tbody = document.getElementById('timetable-body');
-                    const times = ["08:10", "09:10", "10:10", "11:10", "13:10", "14:10", "15:10", "16:10", "17:10"];
-                    for(let i=1; i<=9; i++) {
+                    // 更新後的時間表：第5節為吃飯，第6節為13:10
+                    const times = ["08:10", "09:10", "10:10", "11:10", "12:10", "13:10", "14:10", "15:10", "16:10", "17:10"];
+                    
+                    for(let i=1; i<=10; i++) {
+                        let label = i;
+                        let time = times[i-1];
+                        let rowClass = "";
+                        let content = `<td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>`;
+
+                        if(i === 5) {
+                            label = "吃飯";
+                            time = "午休";
+                            rowClass = 'class="lunch-row"';
+                        } else if (i > 5) {
+                            label = i - 1; // 讓吃飯後面的標籤維持 5, 6, 7...
+                        }
+
                         tbody.innerHTML += `
-                            <tr>
-                                <td style="background:#f9f9f9"><b>${i}</b><span class="time-label">${times[i-1]}</span></td>
-                                <td contenteditable="true"></td><td contenteditable="true"></td>
-                                <td contenteditable="true"></td><td contenteditable="true"></td>
-                                <td contenteditable="true"></td>
+                            <tr ${rowClass}>
+                                <td style="background:#f9f9f9"><b>${label}</b><span class="time-label">${time}</span></td>
+                                ${content}
                             </tr>`;
                     }
                 </script>
@@ -91,7 +106,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 核心填入邏輯：只填入文字，不破壞 HTML 結構
         const fillTable = (dataArray) => {
             const cells = document.querySelectorAll('#timetable-body td[contenteditable="true"]');
             dataArray.forEach((text, index) => {
@@ -139,7 +153,7 @@
                     cells: cellTexts,
                     updatedAt: new Date()
                 });
-                alert("✅ 雲端同步成功！時間標籤已固定。");
+                alert("✅ 雲端同步成功！午休時間已加入。");
             } catch (e) { alert("儲存失敗: " + e.message); }
         };
 
@@ -151,17 +165,9 @@
                 if (docSnap.exists() && docSnap.data().cells) {
                     fillTable(docSnap.data().cells);
                     alert("🔍 已顯示 " + friendEmail + " 的課表");
-                } else { alert("找不到該課表或格式不相容。"); }
+                } else { alert("找不到該課表。"); }
             } catch (e) { alert("搜尋失敗: " + e.message); }
         };
-    </script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW 失敗', err));
-            });
-        }
     </script>
 </body>
 </html>
