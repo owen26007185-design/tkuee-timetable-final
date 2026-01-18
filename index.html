@@ -125,7 +125,7 @@
             <div class="card">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                     <a href="https://iclass.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">iClass 2.0</a>
-                    <a href="https://sso.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">淡江行政 (SSO)</a>
+                    <a href="http://sinfo.ais.tku.edu.tw/eMis/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">淡江行政查詢</a>
                 </div>
             </div>
         </section>
@@ -242,8 +242,8 @@
                     if (idx >= 0 && idx < 50) { newData[idx] = { c: name, r: "待填", t: "req" }; count++; }
                 });
             }
-            if(count > 0) { fillTable(newData); alert(`✅ 成功匯入 ${count} 堂課`); document.getElementById('import-area').value = ""; }
-            else { alert("找不到格式。"); }
+            if(count > 0) { fillTable(newData); alert(`✅ 已自動填入 ${count} 堂課`); document.getElementById('import-area').value = ""; }
+            else { alert("格式不符。"); }
         };
 
         // --- 🔍 搜尋與社交 ---
