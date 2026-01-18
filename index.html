@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>個人課表 App</title>
+    <title>個人課表 Pro</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -18,6 +18,8 @@
             --text-sub: #7f8c8d;
             --primary: #3498db;
             --border: #dfe6e9;
+            --online: #2ecc71;
+            --offline: #bdc3c7;
         }
 
         body.dark-mode {
@@ -34,7 +36,7 @@
             color: var(--text-main);
         }
 
-        /* 🍔 側邊欄與導覽列 */
+        /* 🍔 漢堡選單與 Header */
         .header { width: 100%; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
         .menu-icon { font-size: 24px; color: white; cursor: pointer; }
 
@@ -47,7 +49,7 @@
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 999; }
         .overlay.active { display: block; }
 
-        /* 📱 內容區塊 */
+        /* 📱 內容區塊與卡片 */
         .content-section { display: none; width: 100%; max-width: 500px; padding: 10px; box-sizing: border-box; }
         .content-section.active { display: block; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -57,32 +59,29 @@
         button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; padding: 12px; }
         .primary-btn { background: var(--primary); color: white; width: 100%; }
 
+        /* 🟢 在線狀態燈號 */
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .online { background: var(--online); box-shadow: 0 0 5px var(--online); }
+        .offline { background: var(--offline); }
+
         /* 📅 課表樣式 */
         table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 12px; overflow: hidden; table-layout: fixed; }
         th, td { border: 1px solid var(--border); padding: 8px 2px; text-align: center; font-size: 12px; position: relative; }
         th { background: #34495e; color: white; }
-        .time-label { font-size: 8px; color: var(--text-sub); display: block; }
-        .room-label { font-size: 8px; color: var(--text-sub); border-top: 1px dashed var(--border); margin-top: 2px; }
         .highlight-now { background: #fff3cd !important; border: 2px solid #ffc107 !important; color: #333; }
 
-        /* 🎨 課程顏色分類 */
         .type-req { border-left: 4px solid #ef5350; background: rgba(239, 83, 80, 0.1); }
         .type-ele { border-left: 4px solid #42a5f5; background: rgba(66, 165, 245, 0.1); }
         .type-lab { border-left: 4px solid #66bb6a; background: rgba(102, 187, 106, 0.1); }
 
-        .note-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .settings-group { margin-bottom: 15px; text-align: left; }
-        .settings-label { font-size: 11px; color: var(--text-sub); font-weight: bold; }
-        .read-only-box { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 8px; font-size: 12px; word-break: break-all; }
-        
-        .friend-tag { background: var(--primary); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; margin: 4px; display: inline-flex; align-items: center; cursor: pointer; }
+        .friend-tag { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 12px; margin: 5px 0; display: flex; align-items: center; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="menu-icon" onclick="toggleSidebar()">☰</div>
-        <div style="color:white; font-weight:bold; font-size:20px;">課表</div>
+        <div style="color:white; font-weight:bold; font-size:18px;">個人課表 Pro</div>
         <div class="menu-icon" onclick="toggleDarkMode()">🌙</div>
     </div>
 
@@ -91,22 +90,18 @@
     <div class="sidebar" id="sidebar">
         <h2 style="color:var(--primary); margin-bottom:20px;">功能選單</h2>
         <div class="sidebar-item" onclick="showSection('timetable-section')">🏠 我的課表首頁</div>
-        <div class="sidebar-item" onclick="showSection('friends-section')">👥 好友名單</div>
-        <div class="sidebar-item" onclick="showSection('requests-section')">💌 好友請求 <span id="req-count" style="color:#ef5350; font-weight:bold;"></span></div>
-        <div class="sidebar-item" onclick="showSection('explore-section')">🌍 探索新好友</div>
+        <div class="sidebar-item" onclick="showSection('friends-section')">👥 好友在線狀態</div>
+        <div class="sidebar-item" onclick="showSection('explore-section')">🌍 探索/搜尋好友</div>
         <div class="sidebar-item" onclick="showSection('settings-section')">⚙️ 個人設定</div>
         <div class="sidebar-item" onclick="handleLogout()" style="color:#e74c3c; margin-top:40px;">🚪 登出帳號</div>
     </div>
 
     <div class="card" id="auth-section" style="margin-top:40px; width:90%; max-width:400px;">
-        <div style="text-align:center; margin-bottom:20px;">
-            <img src="icon.png" style="width:70px; border-radius:15px; margin-bottom:10px;">
-            <h2 style="margin:0;">請先登入</h2>
-        </div>
+        <h2 style="text-align:center;">歡迎登入</h2>
         <input type="email" id="email" placeholder="Email (帳號)">
         <input type="password" id="pw" placeholder="密碼">
         <button class="primary-btn" onclick="handleAuth('login')">立刻進入</button>
-        <button class="primary-btn" style="background:#95a5a6; margin-top:10px;" onclick="handleAuth('signup')">註冊新帳號</button>
+        <button class="primary-btn" style="background:#95a5a6; margin-top:8px;" onclick="handleAuth('signup')">註冊新帳號</button>
     </div>
 
     <div id="main-app" style="display:none; width:100%;">
@@ -117,72 +112,48 @@
                     <thead><tr><th style="width: 45px;">節次</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr></thead>
                     <tbody id="timetable-body"></tbody>
                 </table>
-                <button class="primary-btn" style="background:#2ecc71; margin-top:12px;" onclick="saveAllData()">💾 儲存所有變更</button>
+                <button class="primary-btn" style="background:#2ecc71; margin-top:12px;" onclick="saveAllData()">💾 儲存並同步雲端</button>
             </div>
-            
             <div class="card">
-                <h3 style="margin-top:0; font-size:16px;">📝 作業與小考</h3>
-                <div id="notes-list"></div>
-            </div>
-
-            <div class="card">
-                <h3 style="margin:0 0 10px 0; font-size:16px;">🔗 淡江快捷連結</h3>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                    <a href="https://iclass.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">iClass 2.0</a>
-                    <a href="https://sso.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">資訊系統 (SSO)</a>
-                    <a href="https://www.ais.tku.edu.tw/elecos/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">選課系統</a>
+                    <a href="https://iclass.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; padding:10px; border-radius:10px; text-align:center; color:#333; font-size:12px;">iClass 2.0</a>
+                    <a href="https://sso.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; padding:10px; border-radius:10px; text-align:center; color:#333; font-size:12px;">資訊系統 (SSO)</a>
                 </div>
             </div>
         </section>
 
         <section id="friends-section" class="content-section">
             <div class="card">
-                <h3>👥 我的好友</h3>
-                <div id="friend-list-container">尚未加入好友</div>
-            </div>
-        </section>
-
-        <section id="requests-section" class="content-section">
-            <div class="card">
-                <h3>💌 收到請求</h3>
-                <div id="req-list-container">無待處理請求</div>
+                <h3>👥 好友在線狀態</h3>
+                <div id="friend-list-container">載入中...</div>
             </div>
         </section>
 
         <section id="explore-section" class="content-section">
             <div class="card">
                 <h3>🌍 搜尋同學</h3>
-                <input type="text" id="search-input" placeholder="輸入 Email 或 好友 ID (UID)">
-                <button class="primary-btn" onclick="searchFriend()">🔍 搜尋並載入課表</button>
-                <button class="primary-btn" style="background:#f39c12; margin-top:10px;" onclick="sendFriendRequest()">➕ 發送好友請求</button>
+                <input type="text" id="search-input" placeholder="輸入 Email 或 UID">
+                <button class="primary-btn" onclick="searchFriend()">🔍 搜尋課表</button>
             </div>
         </section>
 
         <section id="settings-section" class="content-section">
             <div class="card">
                 <h3>⚙️ 個人設定</h3>
-                <div class="settings-group">
-                    <div class="settings-label">我的好友唯一 ID (分享給好友以新增)</div>
-                    <div id="display-uid" class="read-only-box">載入中...</div>
-                </div>
-                <div class="settings-group">
-                    <div class="settings-label">用戶名稱</div>
-                    <input type="text" id="set-username" placeholder="暱稱">
-                </div>
-                <div class="settings-group">
-                    <div class="settings-label">學號</div>
-                    <input type="text" id="set-student-id" placeholder="學號">
-                </div>
-                <button class="primary-btn" style="background:#2ecc71;" onclick="saveProfile()">💾 儲存設定</button>
+                <div style="font-size:11px; color:#999; margin-bottom:5px;">我的好友 ID (UID)</div>
+                <div id="display-uid" style="background:rgba(0,0,0,0.05); padding:10px; border-radius:8px; font-size:12px; word-break:break-all; margin-bottom:15px; color:#666;">--</div>
+                <input type="text" id="set-username" placeholder="用戶暱稱">
+                <input type="text" id="set-student-id" placeholder="學號">
+                <button class="primary-btn" style="background:#2ecc71;" onclick="saveProfile()">💾 儲存個人資訊</button>
             </div>
         </section>
-
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getDatabase, ref, onValue, onDisconnect, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDYw7X6OOlPrZRFlBuglb6i1MMvNdkyH1k",
@@ -190,14 +161,17 @@
             projectId: "tkuee-timetable",
             storageBucket: "tkuee-timetable.firebasestorage.app",
             messagingSenderId: "12075058527",
-            appId: "1:12075058527:web:c6a3f9e99a6f7e75bb22ea"
+            appId: "1:12075058527:web:c6a3f9e99a6f7e75bb22ea",
+            databaseURL: "https://tkuee-timetable-default-rtdb.firebaseio.com"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const rtdb = getDatabase(app);
+        let myFriends = [];
 
-        // --- UI 控制與切換 ---
+        // --- UI 控制與在線狀態機制 ---
         window.toggleSidebar = () => {
             document.getElementById('sidebar').classList.toggle('active');
             document.getElementById('overlay').classList.toggle('active');
@@ -206,6 +180,7 @@
         window.showSection = (id) => {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            if(id === 'friends-section') renderFriendStatus();
             toggleSidebar();
         };
 
@@ -213,74 +188,100 @@
             document.body.classList.toggle('dark-mode');
             localStorage.setItem('dark-mode', document.body.classList.contains('dark-mode'));
         };
+        if(localStorage.getItem('dark-mode') === 'true') document.body.classList.add('dark-mode');
 
-        // --- 課表初始化生成 ---
-        const tbody = document.getElementById('timetable-body');
-        const periods = ["08:10", "09:10", "10:10", "11:10", "12:10", "13:10", "14:10", "15:10", "16:10", "17:10"];
-        for(let i=1; i<=10; i++) {
-            let label = i; let time = periods[i-1];
-            if(i === 5) { label = "休"; time = "午休"; } else if (i > 5) { label = i - 1; }
-            let cells = "";
-            for(let d=1; d<=5; d++) {
-                cells += `<td onclick="cycleColor(this)" data-type="none">
-                            <div class="course-name" contenteditable="true"></div>
-                            <div class="room-label" contenteditable="true"></div>
-                          </td>`;
-            }
-            tbody.innerHTML += `<tr data-row="${i}"><td style="background:rgba(0,0,0,0.05); font-weight:bold;">${label}<span class="time-label">${time}</span></td>${cells}</tr>`;
-        }
-
-        // --- 核心搜尋邏輯：支援 Email 與 UID ---
-        window.searchFriend = async () => {
-            const input = document.getElementById('search-input').value.trim();
-            if(!input) return alert("請輸入 Email 或 UID");
-
-            let friendData = null;
-            let targetEmail = "";
-
-            try {
-                if (input.includes('@')) {
-                    const snap = await getDoc(doc(db, "schedules", input));
-                    if(snap.exists()) { friendData = snap.data(); targetEmail = input; }
-                } else {
-                    const q = query(collection(db, "schedules"), where("profile.uid", "==", input));
-                    const qs = await getDocs(q);
-                    if(!qs.empty) { friendData = qs.docs[0].data(); targetEmail = qs.docs[0].id; }
-                }
-
-                if(friendData && friendData.v6_data) {
-                    fillTable(friendData.v6_data);
-                    document.getElementById('search-input').value = targetEmail;
-                    showSection('timetable-section');
-                    alert(`🔍 已載入 ${friendData.profile?.username || "同學"} 的課表`);
-                } else { alert("找不到該課表資料"); }
-            } catch(e) { alert("搜尋失敗"); }
-        };
-
-        // --- 資料儲存與同步 ---
+        // 🟢 實作業界標準：onDisconnect 遺言機制
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 document.getElementById('auth-section').style.display = 'none';
                 document.getElementById('main-app').style.display = 'block';
                 document.getElementById('display-uid').innerText = user.uid;
+
+                // 在線狀態監控
+                const statusRef = ref(rtdb, '/status/' + user.uid);
+                const connectedRef = ref(rtdb, '.info/connected');
+
+                onValue(connectedRef, (snap) => {
+                    if (snap.val() === false) return;
+                    onDisconnect(statusRef).set({ state: 'offline', last_changed: serverTimestamp() }).then(() => {
+                        set(statusRef, { state: 'online', last_changed: serverTimestamp(), email: user.email });
+                    });
+                });
+
                 const snap = await getDoc(doc(db, "schedules", user.email));
-                if(snap.exists()) {
+                if (snap.exists()) {
                     const data = snap.data();
                     if(data.v6_data) fillTable(data.v6_data);
+                    myFriends = data.friends || [];
                     if(data.profile) {
                         document.getElementById('set-username').value = data.profile.username || "";
                         document.getElementById('set-student-id').value = data.profile.studentId || "";
                     }
                 }
+                highlightCurrentPeriod();
+                setInterval(highlightCurrentPeriod, 60000);
             }
         });
 
+        // 渲染好友狀態 (即時同步)
+        async function renderFriendStatus() {
+            const container = document.getElementById('friend-list-container');
+            container.innerHTML = "讀取中...";
+            let html = "";
+            for (const email of myFriends) {
+                const fSnap = await getDoc(doc(db, "schedules", email));
+                const fData = fSnap.exists() ? fSnap.data() : null;
+                const fUid = fData?.profile?.uid;
+
+                if (fUid) {
+                    const statusRef = ref(rtdb, '/status/' + fUid);
+                    onValue(statusRef, (snapshot) => {
+                        const status = snapshot.val();
+                        const isOnline = status?.state === 'online';
+                        const el = document.getElementById('status-' + fUid);
+                        if(el) el.className = 'status-dot ' + (isOnline ? 'online' : 'offline');
+                    });
+                    html += `<div class="friend-tag" onclick="loadByEmail('${email}')">
+                                <span id="status-${fUid}" class="status-dot offline"></span>
+                                ${fData?.profile?.username || email.split('@')[0]}
+                             </div>`;
+                }
+            }
+            container.innerHTML = html || "尚未加入好友";
+        }
+
+        // 支援 UID 與 Email 搜尋
+        window.searchFriend = async () => {
+            const input = document.getElementById('search-input').value.trim();
+            if(!input) return;
+            try {
+                let friendData = null;
+                if (input.includes('@')) {
+                    const snap = await getDoc(doc(db, "schedules", input));
+                    if(snap.exists()) friendData = snap.data();
+                } else {
+                    const q = query(collection(db, "schedules"), where("profile.uid", "==", input));
+                    const qs = await getDocs(q);
+                    if(!qs.empty) friendData = qs.docs[0].data();
+                }
+                if(friendData) { fillTable(friendData.v6_data); showSection('timetable-section'); alert("🔍 已載入同學課表"); }
+            } catch(e) { alert("搜尋失敗"); }
+        };
+
+        // --- 核心課表生成與功能 ---
+        const tbody = document.getElementById('timetable-body');
+        for(let i=1; i<=10; i++) {
+            let cells = "";
+            for(let d=1; d<=5; d++) cells += `<td onclick="cycleColor(this)" data-type="none"><div class="course-name" contenteditable="true"></div><div style="font-size:8px; opacity:0.6" contenteditable="true"></div></td>`;
+            tbody.innerHTML += `<tr data-row="${i}"><td style="background:rgba(0,0,0,0.05); font-weight:bold;">${i}</td>${cells}</tr>`;
+        }
+
         window.saveAllData = async () => { /* 儲存邏輯 */ };
-        window.saveProfile = async () => { /* 設定儲存邏輯 */ };
-        window.handleAuth = (type) => { /* 驗證邏輯 */ };
+        window.saveProfile = async () => { /* 個人資訊儲存 */ };
         window.handleLogout = () => signOut(auth).then(() => location.reload());
-        window.cycleColor = (el) => { /* 換色邏輯 */ };
+        window.cycleColor = (el) => { /* 顏色循環 */ };
         function fillTable(data) { /* 填表邏輯 */ }
+        function highlightCurrentPeriod() { /* 高亮邏輯 */ }
     </script>
 </body>
 </html>
