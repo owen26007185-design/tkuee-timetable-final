@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TKU EE 課表 Pro - Owen</title>
+    <title>Owen 的課表 Pro</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
@@ -36,7 +36,6 @@
             color: var(--text-main);
         }
 
-        /* 🍔 導覽列與側邊欄 */
         .header { width: 100%; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
         .menu-icon { font-size: 24px; color: white; cursor: pointer; }
 
@@ -67,6 +66,10 @@
         th { background: #34495e; color: white; }
         .highlight-now { background: #fff3cd !important; border: 2px solid #ffc107 !important; color: #333; }
 
+        .type-req { border-left: 4px solid #ef5350; background: rgba(239, 83, 80, 0.1); }
+        .type-ele { border-left: 4px solid #42a5f5; background: rgba(66, 165, 245, 0.1); }
+        .type-lab { border-left: 4px solid #66bb6a; background: rgba(102, 187, 106, 0.1); }
+
         .request-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 12px; margin-bottom: 8px; }
         .friend-tag { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 12px; margin: 5px 0; display: flex; align-items: center; cursor: pointer; }
     </style>
@@ -75,7 +78,7 @@
 
     <div class="header">
         <div class="menu-icon" onclick="toggleSidebar()">☰</div>
-        <div style="color:white; font-weight:bold; font-size:18px;">TKU EE Timetable</div>
+        <div style="color:white; font-weight:bold; font-size:20px;">個人課表 App</div>
         <div class="menu-icon" onclick="toggleDarkMode()">🌙</div>
     </div>
 
@@ -92,7 +95,7 @@
     </div>
 
     <div class="card" id="auth-section" style="margin-top:40px; width:90%; max-width:400px;">
-        <h2 style="text-align:center;">Owen's App</h2>
+        <h2 style="text-align:center;">Owen 的課表 App</h2>
         <input type="email" id="email-input" placeholder="Email">
         <input type="password" id="pw-input" placeholder="密碼">
         <button class="primary-btn" onclick="handleAuth('login')">立刻進入</button>
@@ -100,7 +103,6 @@
     </div>
 
     <div id="main-app" style="display:none; width:100%;">
-        
         <section id="timetable-section" class="content-section active">
             <div class="card" style="padding: 5px;">
                 <table>
@@ -109,26 +111,26 @@
                 </table>
                 <button class="primary-btn" style="background:#2ecc71; margin-top:10px;" onclick="saveAllData()">💾 同步雲端課表</button>
             </div>
+            <div class="card">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <a href="https://iclass.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">iClass 2.0</a>
+                    <a href="https://sso.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">淡江 SSO</a>
+                </div>
+            </div>
         </section>
 
         <section id="friends-section" class="content-section">
-            <div class="card">
-                <h3>👥 好友在線狀態</h3>
-                <div id="friend-list-container">尚未加入好友</div>
-            </div>
+            <div class="card"><h3>👥 好友在線狀態</h3><div id="friend-list-container">尚未加入好友</div></div>
         </section>
 
         <section id="requests-section" class="content-section">
-            <div class="card">
-                <h3>💌 待處理請求</h3>
-                <div id="request-list-container">目前沒有新的請求</div>
-            </div>
+            <div class="card"><h3>💌 待處理請求</h3><div id="request-list-container">目前沒有新的請求</div></div>
         </section>
 
         <section id="explore-section" class="content-section">
             <div class="card">
                 <h3>🌍 探索同學</h3>
-                <input type="text" id="search-input" placeholder="輸入 Email 或 好友 ID (UID)">
+                <input type="text" id="search-input" placeholder="輸入 Email 或 UID">
                 <button class="primary-btn" onclick="searchFriend()">🔍 查閱課表</button>
                 <button id="add-friend-btn" class="primary-btn" style="background:#f39c12; margin-top:10px; display:none;" onclick="sendFriendRequest()">➕ 加為好友</button>
             </div>
@@ -167,16 +169,16 @@
         const rtdb = getDatabase(app);
         
         let currentUserEmail = "";
-        let lastFoundTargetEmail = ""; // 用來暫存搜尋到的對象 Email
+        let lastFoundTargetEmail = "";
 
-        // --- 🔐 驗證邏輯 ---
         window.handleAuth = async (type) => {
             const email = document.getElementById('email-input').value.trim();
             const pw = document.getElementById('pw-input').value.trim();
+            if(!email || !pw) return alert("請輸入帳密");
             try {
                 if(type === 'login') await signInWithEmailAndPassword(auth, email, pw);
                 else await createUserWithEmailAndPassword(auth, email, pw);
-            } catch(e) { alert("失敗: " + e.message); }
+            } catch(e) { alert("驗證失敗: " + e.message); }
         };
 
         onAuthStateChanged(auth, async (user) => {
@@ -186,7 +188,6 @@
                 document.getElementById('main-app').style.display = 'block';
                 document.getElementById('display-uid').innerText = "我的好友 ID: " + user.uid;
 
-                // 在線偵測
                 const statusRef = ref(rtdb, '/status/' + user.uid);
                 onValue(ref(rtdb, '.info/connected'), (snap) => {
                     if (snap.val() === false) return;
@@ -195,8 +196,9 @@
                     });
                 });
 
-                // 初始載入
                 refreshUserData();
+                highlightCurrentPeriod();
+                setInterval(highlightCurrentPeriod, 60000);
             }
         });
 
@@ -214,11 +216,11 @@
             }
         }
 
-        // --- 🔍 搜尋與加好友核心 ---
         window.searchFriend = async () => {
             const input = document.getElementById('search-input').value.trim();
             document.getElementById('add-friend-btn').style.display = 'none';
-            
+            if(!input) return alert("請輸入 Email 或 UID");
+
             try {
                 let targetData = null;
                 if (input.includes('@')) {
@@ -235,8 +237,8 @@
                     document.getElementById('add-friend-btn').style.display = (lastFoundTargetEmail === currentUserEmail) ? 'none' : 'block';
                     showSection('timetable-section');
                     alert(`🔍 已載入 ${targetData.profile?.username || "同學"} 的課表`);
-                } else { alert("找不到對象"); }
-            } catch(e) { alert("搜尋失敗"); }
+                } else { alert("找不到該對象，請確認對方已儲存過資料。"); }
+            } catch(e) { alert("搜尋出錯"); }
         };
 
         window.sendFriendRequest = async () => {
@@ -253,7 +255,6 @@
             const container = document.getElementById('request-list-container');
             document.getElementById('req-badge').innerText = reqs.length > 0 ? `(${reqs.length})` : "";
             if(reqs.length === 0) { container.innerHTML = "目前沒有新的請求"; return; }
-            
             container.innerHTML = reqs.map(email => `
                 <div class="request-item">
                     <span>${email.split('@')[0]} 想加你好友</span>
@@ -264,12 +265,10 @@
 
         window.acceptFriend = async (targetEmail) => {
             try {
-                // 1. 在自己的文件中：增加好友，移除請求
                 await updateDoc(doc(db, "schedules", currentUserEmail), {
                     friends: arrayUnion(targetEmail),
                     requests: arrayRemove(targetEmail)
                 });
-                // 2. 在對方的文件中：增加自己為好友
                 await updateDoc(doc(db, "schedules", targetEmail), {
                     friends: arrayUnion(currentUserEmail)
                 });
@@ -278,7 +277,6 @@
             } catch(e) { alert("處理失敗"); }
         };
 
-        // --- 🎨 輔助功能 ---
         async function renderFriendStatus(friends) {
             const container = document.getElementById('friend-list-container');
             let html = "";
@@ -303,31 +301,28 @@
 
         window.loadByEmail = (e) => { document.getElementById('search-input').value = e; window.searchFriend(); };
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); };
-        window.showSection = (id) => { 
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
-            document.getElementById(id).classList.add('active'); 
-            toggleSidebar(); 
-        };
+        window.showSection = (id) => { document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); toggleSidebar(); };
+        
         window.saveAllData = async () => {
             const tableData = Array.from(document.querySelectorAll('#timetable-body td[data-type]')).map(td => ({
                 c: td.querySelector('.course-name').innerText,
                 r: td.querySelector('.room-label').innerText,
                 t: td.getAttribute('data-type')
             }));
-            await setDoc(doc(db, "schedules", currentUserEmail), { v6_data: tableData }, { merge: true });
-            alert("✅ 同步成功！");
-        };
-        window.saveProfile = async () => {
-            await setDoc(doc(db, "schedules", currentUserEmail), {
+            await setDoc(doc(db, "schedules", currentUserEmail), { 
+                v6_data: tableData,
                 profile: { username: document.getElementById('set-username').value, studentId: document.getElementById('set-student-id').value, uid: auth.currentUser.uid }
             }, { merge: true });
-            alert("✅ 設定已儲存！");
+            alert("✅ 同步成功！");
         };
+        window.saveProfile = window.saveAllData;
+
         window.cycleColor = (el) => {
             const types = ['none', 'req', 'ele', 'lab'];
             let next = types[(types.indexOf(el.getAttribute('data-type')) + 1) % types.length];
             el.setAttribute('data-type', next); el.className = 'type-' + next;
         };
+
         function fillTable(data) {
             const cells = document.querySelectorAll('#timetable-body td[data-type]');
             data.forEach((item, idx) => { if(cells[idx]) {
@@ -337,6 +332,7 @@
                 cells[idx].className = 'type-' + (item.t || "none");
             }});
         }
+
         function highlightCurrentPeriod() {
             const now = new Date(); const day = now.getDay();
             const time = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
@@ -349,9 +345,10 @@
                 }}
             }
         }
+
         window.handleLogout = () => signOut(auth).then(() => location.reload());
         window.toggleDarkMode = () => { document.body.classList.toggle('dark-mode'); localStorage.setItem('dark-mode', document.body.classList.contains('dark-mode')); };
-        
+
         const tbody = document.getElementById('timetable-body');
         for(let i=1; i<=10; i++) {
             let cells = "";
