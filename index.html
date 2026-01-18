@@ -36,10 +36,10 @@
             color: var(--text-main);
         }
 
-        /* 🍔 導覽與側邊欄 */
         .header { width: 100%; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
         .menu-icon { font-size: 24px; color: white; cursor: pointer; }
 
+        /* 🍔 側邊欄與遮罩 */
         .sidebar {
             position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg);
             box-shadow: 2px 0 15px rgba(0,0,0,0.3); transition: 0.3s; z-index: 1000; padding: 20px; box-sizing: border-box;
@@ -49,7 +49,6 @@
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 999; }
         .overlay.active { display: block; }
 
-        /* 📱 卡片介面 */
         .content-section { display: none; width: 100%; max-width: 500px; padding: 10px; box-sizing: border-box; }
         .content-section.active { display: block; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -59,16 +58,17 @@
         button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; padding: 12px; }
         .primary-btn { background: var(--primary); color: white; width: 100%; }
 
-        /* 🟢 在線燈號與課表 */
+        /* 🟢 狀態燈號 */
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
         .online { background: var(--online); box-shadow: 0 0 5px var(--online); }
         .offline { background: var(--offline); }
 
         table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 12px; overflow: hidden; table-layout: fixed; }
-        th, td { border: 1px solid var(--border); padding: 8px 2px; text-align: center; font-size: 11px; position: relative; }
+        th, td { border: 1px solid var(--border); padding: 8px 2px; text-align: center; font-size: 11px; }
         th { background: #34495e; color: white; }
         .highlight-now { background: #fff3cd !important; border: 2px solid #ffc107 !important; color: #333; }
 
+        /* 課程類型樣式 */
         .type-req { border-left: 4px solid #ef5350; background: rgba(239, 83, 80, 0.1); }
         .type-ele { border-left: 4px solid #42a5f5; background: rgba(66, 165, 245, 0.1); }
         .type-lab { border-left: 4px solid #66bb6a; background: rgba(102, 187, 106, 0.1); }
@@ -99,7 +99,7 @@
 
     <div class="card" id="auth-section" style="margin-top:40px; width:90%; max-width:400px;">
         <h2 style="text-align:center;">歡迎進入</h2>
-        <input type="email" id="email-input" placeholder="Email (帳號)">
+        <input type="email" id="email-input" placeholder="Email">
         <input type="password" id="pw-input" placeholder="密碼">
         <button class="primary-btn" onclick="handleAuth('login')">立刻進入</button>
         <button class="primary-btn" style="background:#95a5a6; margin-top:10px;" onclick="handleAuth('signup')">註冊新帳號</button>
@@ -125,7 +125,7 @@
             <div class="card">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                     <a href="https://iclass.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">iClass 2.0</a>
-                    <a href="https://sso.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">淡江 SSO</a>
+                    <a href="https://sso.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; color:#333; padding:10px; border-radius:8px; text-align:center; font-size:12px;">淡江行政 (SSO)</a>
                 </div>
             </div>
         </section>
@@ -182,7 +182,7 @@
         let currentUserEmail = "";
         let lastFoundTargetEmail = "";
 
-        // --- 🔐 驗證邏輯 ---
+        // --- 🔐 認證邏輯 ---
         window.handleAuth = async (type) => {
             const email = document.getElementById('email-input').value.trim();
             const pw = document.getElementById('pw-input').value.trim();
@@ -190,7 +190,7 @@
             try {
                 if(type === 'login') await signInWithEmailAndPassword(auth, email, pw);
                 else await createUserWithEmailAndPassword(auth, email, pw);
-            } catch(e) { alert("失敗: " + e.message); }
+            } catch(e) { alert("驗證失敗: " + e.message); }
         };
 
         onAuthStateChanged(auth, async (user) => {
@@ -200,7 +200,6 @@
                 document.getElementById('main-app').style.display = 'block';
                 document.getElementById('display-uid').innerText = "我的好友 ID: " + user.uid;
 
-                // 🟢 RTDB 在線偵測機制
                 const statusRef = ref(rtdb, '/status/' + user.uid);
                 onValue(ref(rtdb, '.info/connected'), (snap) => {
                     if (snap.val() === false) return;
@@ -228,7 +227,7 @@
             }
         }
 
-        // --- 🤖 自動匯入邏輯 ---
+        // --- 🤖 自動匯入功能 ---
         window.runAutoImport = () => {
             const rawText = document.getElementById('import-area').value;
             if(!rawText.trim()) return alert("請貼上課表文字");
@@ -243,8 +242,8 @@
                     if (idx >= 0 && idx < 50) { newData[idx] = { c: name, r: "待填", t: "req" }; count++; }
                 });
             }
-            if(count > 0) { fillTable(newData); alert(`✅ 已自動填入 ${count} 堂課`); document.getElementById('import-area').value = ""; }
-            else { alert("找不到對應格式，請確認文字內容。"); }
+            if(count > 0) { fillTable(newData); alert(`✅ 成功匯入 ${count} 堂課`); document.getElementById('import-area').value = ""; }
+            else { alert("找不到格式。"); }
         };
 
         // --- 🔍 搜尋與社交 ---
@@ -265,7 +264,6 @@
                     fillTable(targetData.v6_data);
                     document.getElementById('add-friend-btn').style.display = (lastFoundTargetEmail === currentUserEmail) ? 'none' : 'block';
                     showSection('timetable-section');
-                    alert(`🔍 已載入 ${targetData.profile?.username || "同學"} 的課表`);
                 } else { alert("找不到對象"); }
             } catch(e) { alert("搜尋失敗"); }
         };
@@ -273,23 +271,23 @@
         window.sendFriendRequest = async () => {
             try {
                 await updateDoc(doc(db, "schedules", lastFoundTargetEmail), { requests: arrayUnion(currentUserEmail) });
-                alert("✅ 已送出好友請求！");
-            } catch(e) { alert("發送失敗"); }
+                alert("✅ 已送出請求！");
+            } catch(e) { alert("失敗"); }
         };
 
         window.acceptFriend = async (target) => {
             try {
                 await updateDoc(doc(db, "schedules", currentUserEmail), { friends: arrayUnion(target), requests: arrayRemove(target) });
                 await updateDoc(doc(db, "schedules", target), { friends: arrayUnion(currentUserEmail) });
-                alert("🤝 已成為好友！"); refreshUserData();
+                refreshUserData();
             } catch(e) { alert("處理失敗"); }
         };
 
-        // --- 🎨 UI 渲染與輔助功能 ---
+        // --- 🎨 介面與渲染 ---
         function renderRequests(reqs) {
             const container = document.getElementById('request-list-container');
             document.getElementById('req-badge').innerText = reqs.length > 0 ? `(${reqs.length})` : "";
-            if(reqs.length === 0) { container.innerHTML = "目前沒有新的請求"; return; }
+            if(reqs.length === 0) { container.innerHTML = "沒有新請求"; return; }
             container.innerHTML = reqs.map(e => `<div class="request-item"><span>${e.split('@')[0]}</span><button onclick="acceptFriend('${e}')" style="background:var(--online); color:white; padding:5px 10px;">接受</button></div>`).join('');
         }
 
@@ -316,14 +314,14 @@
                 c: td.querySelector('.course-name').innerText, r: td.querySelector('.room-label').innerText, t: td.getAttribute('data-type')
             }));
             await setDoc(doc(db, "schedules", currentUserEmail), { v6_data: tableData }, { merge: true });
-            alert("✅ 資料同步成功！");
+            alert("✅ 同步成功！");
         };
 
         window.saveProfile = async () => {
             await setDoc(doc(db, "schedules", currentUserEmail), {
                 profile: { username: document.getElementById('set-username').value, studentId: document.getElementById('set-student-id').value, uid: auth.currentUser.uid }
             }, { merge: true });
-            alert("✅ 個人資訊已儲存！");
+            alert("✅ 資訊已儲存！");
         };
 
         window.cycleColor = (el) => {
