@@ -20,13 +20,13 @@
             --border: #dfe6e9;
             --online: #2ecc71;
             --offline: #bdc3c7;
+            --danger: #ef5350;
         }
 
         body.dark-mode {
             --bg-gradient: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
             --card-bg: #2d2d2d;
             --text-main: #ecf0f1;
-            --text-sub: #bdc3c7;
             --border: #404040;
         }
 
@@ -49,7 +49,6 @@
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; z-index: 999; }
         .overlay.active { display: block; }
 
-        /* 📱 內容卡片 */
         .content-section { display: none; width: 100%; max-width: 500px; padding: 10px; box-sizing: border-box; }
         .content-section.active { display: block; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -59,20 +58,16 @@
         button { border: none; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; padding: 12px; }
         .primary-btn { background: var(--primary); color: white; width: 100%; }
 
-        /* 🟢 在線燈號與課表 */
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
         .online { background: var(--online); box-shadow: 0 0 5px var(--online); }
         .offline { background: var(--offline); }
 
         table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 12px; overflow: hidden; table-layout: fixed; }
-        th, td { border: 1px solid var(--border); padding: 8px 2px; text-align: center; font-size: 11px; position: relative; }
+        th, td { border: 1px solid var(--border); padding: 8px 2px; text-align: center; font-size: 11px; }
         th { background: #34495e; color: white; }
         .highlight-now { background: #fff3cd !important; border: 2px solid #ffc107 !important; color: #333; }
 
-        .type-req { border-left: 4px solid #ef5350; background: rgba(239, 83, 80, 0.1); }
-        .type-ele { border-left: 4px solid #42a5f5; background: rgba(66, 165, 245, 0.1); }
-        .type-lab { border-left: 4px solid #66bb6a; background: rgba(102, 187, 106, 0.1); }
-
+        .request-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 12px; margin-bottom: 8px; }
         .friend-tag { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 12px; margin: 5px 0; display: flex; align-items: center; cursor: pointer; }
     </style>
 </head>
@@ -90,9 +85,10 @@
         <h2 style="color:var(--primary); margin-bottom:20px;">選單</h2>
         <div class="sidebar-item" onclick="showSection('timetable-section')">🏠 我的課表</div>
         <div class="sidebar-item" onclick="showSection('friends-section')">👥 好友在線</div>
+        <div class="sidebar-item" onclick="showSection('requests-section')">💌 好友請求 <span id="req-badge" style="color:var(--danger);"></span></div>
         <div class="sidebar-item" onclick="showSection('explore-section')">🌍 探索/搜尋</div>
         <div class="sidebar-item" onclick="showSection('settings-section')">⚙️ 個人設定</div>
-        <div class="sidebar-item" onclick="handleLogout()" style="color:#e74c3c; margin-top:40px;">🚪 登出</div>
+        <div class="sidebar-item" onclick="handleLogout()" style="color:var(--danger); margin-top:40px;">🚪 登出</div>
     </div>
 
     <div class="card" id="auth-section" style="margin-top:40px; width:90%; max-width:400px;">
@@ -113,13 +109,6 @@
                 </table>
                 <button class="primary-btn" style="background:#2ecc71; margin-top:10px;" onclick="saveAllData()">💾 同步雲端課表</button>
             </div>
-            
-            <div class="card">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                    <a href="https://iclass.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; padding:10px; border-radius:10px; text-align:center; color:#333; font-size:12px;">iClass 2.0</a>
-                    <a href="https://sso.tku.edu.tw/" target="_blank" style="text-decoration:none; background:#eee; padding:10px; border-radius:10px; text-align:center; color:#333; font-size:12px;">淡江 SSO</a>
-                </div>
-            </div>
         </section>
 
         <section id="friends-section" class="content-section">
@@ -129,11 +118,19 @@
             </div>
         </section>
 
+        <section id="requests-section" class="content-section">
+            <div class="card">
+                <h3>💌 待處理請求</h3>
+                <div id="request-list-container">目前沒有新的請求</div>
+            </div>
+        </section>
+
         <section id="explore-section" class="content-section">
             <div class="card">
                 <h3>🌍 探索同學</h3>
-                <input type="text" id="search-input" placeholder="輸入 Email 或 好友 ID">
-                <button class="primary-btn" onclick="searchFriend()">🔍 查看課表</button>
+                <input type="text" id="search-input" placeholder="輸入 Email 或 好友 ID (UID)">
+                <button class="primary-btn" onclick="searchFriend()">🔍 查閱課表</button>
+                <button id="add-friend-btn" class="primary-btn" style="background:#f39c12; margin-top:10px; display:none;" onclick="sendFriendRequest()">➕ 加為好友</button>
             </div>
         </section>
 
@@ -143,7 +140,7 @@
                 <div id="display-uid" style="background:rgba(0,0,0,0.05); padding:10px; border-radius:8px; font-size:11px; margin-bottom:15px; color:#666; word-break:break-all;">載入中...</div>
                 <input type="text" id="set-username" placeholder="暱稱">
                 <input type="text" id="set-student-id" placeholder="學號">
-                <button class="primary-btn" style="background:#2ecc71;" onclick="saveProfile()">💾 儲存資訊</button>
+                <button class="primary-btn" style="background:#2ecc71;" onclick="saveProfile()">💾 儲存設定</button>
             </div>
         </section>
     </div>
@@ -151,10 +148,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getDatabase, ref, onValue, onDisconnect, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // 🔥 Firebase 配置 (已整合 Owen 的資料庫)
         const firebaseConfig = {
             apiKey: "AIzaSyDYw7X6OOlPrZRFlBuglb6i1MMvNdkyH1k",
             authDomain: "tkuee-timetable.firebaseapp.com",
@@ -169,77 +165,124 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const rtdb = getDatabase(app);
-        let currentFriends = [];
+        
+        let currentUserEmail = "";
+        let lastFoundTargetEmail = ""; // 用來暫存搜尋到的對象 Email
 
-        // --- 🔐 驗證邏輯修復 ---
+        // --- 🔐 驗證邏輯 ---
         window.handleAuth = async (type) => {
-            const email = document.getElementById('email-input').value;
-            const pw = document.getElementById('pw-input').value;
-            if(!email || !pw) return alert("請輸入完整帳密");
+            const email = document.getElementById('email-input').value.trim();
+            const pw = document.getElementById('pw-input').value.trim();
             try {
                 if(type === 'login') await signInWithEmailAndPassword(auth, email, pw);
                 else await createUserWithEmailAndPassword(auth, email, pw);
-            } catch(e) { alert("驗證失敗: " + e.message); }
+            } catch(e) { alert("失敗: " + e.message); }
         };
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
+                currentUserEmail = user.email;
                 document.getElementById('auth-section').style.display = 'none';
                 document.getElementById('main-app').style.display = 'block';
-                document.getElementById('display-uid').innerText = "ID: " + user.uid;
+                document.getElementById('display-uid').innerText = "我的好友 ID: " + user.uid;
 
-                // 🟢 RTDB 在線狀態機制
+                // 在線偵測
                 const statusRef = ref(rtdb, '/status/' + user.uid);
-                const connectedRef = ref(rtdb, '.info/connected');
-                onValue(connectedRef, (snap) => {
+                onValue(ref(rtdb, '.info/connected'), (snap) => {
                     if (snap.val() === false) return;
                     onDisconnect(statusRef).set({ state: 'offline', last_changed: serverTimestamp() }).then(() => {
                         set(statusRef, { state: 'online', last_changed: serverTimestamp(), email: user.email });
                     });
                 });
 
-                const snap = await getDoc(doc(db, "schedules", user.email));
-                if (snap.exists()) {
-                    const data = snap.data();
-                    if(data.v6_data) fillTable(data.v6_data);
-                    currentFriends = data.friends || [];
-                    if(data.profile) {
-                        document.getElementById('set-username').value = data.profile.username || "";
-                        document.getElementById('set-student-id').value = data.profile.studentId || "";
-                    }
-                }
-                highlightCurrentPeriod();
-                setInterval(highlightCurrentPeriod, 60000);
+                // 初始載入
+                refreshUserData();
             }
         });
 
-        // --- 👥 好友與搜尋 ---
+        async function refreshUserData() {
+            const snap = await getDoc(doc(db, "schedules", currentUserEmail));
+            if (snap.exists()) {
+                const data = snap.data();
+                if(data.v6_data) fillTable(data.v6_data);
+                renderFriendStatus(data.friends || []);
+                renderRequests(data.requests || []);
+                if(data.profile) {
+                    document.getElementById('set-username').value = data.profile.username || "";
+                    document.getElementById('set-student-id').value = data.profile.studentId || "";
+                }
+            }
+        }
+
+        // --- 🔍 搜尋與加好友核心 ---
         window.searchFriend = async () => {
             const input = document.getElementById('search-input').value.trim();
-            if(!input) return;
+            document.getElementById('add-friend-btn').style.display = 'none';
+            
             try {
-                let friendData = null;
+                let targetData = null;
                 if (input.includes('@')) {
                     const snap = await getDoc(doc(db, "schedules", input));
-                    if(snap.exists()) friendData = snap.data();
+                    if(snap.exists()) { targetData = snap.data(); lastFoundTargetEmail = input; }
                 } else {
                     const q = query(collection(db, "schedules"), where("profile.uid", "==", input));
                     const qs = await getDocs(q);
-                    if(!qs.empty) friendData = qs.docs[0].data();
+                    if(!qs.empty) { targetData = qs.docs[0].data(); lastFoundTargetEmail = qs.docs[0].id; }
                 }
-                if(friendData && friendData.v6_data) {
-                    fillTable(friendData.v6_data);
+
+                if(targetData) {
+                    fillTable(targetData.v6_data);
+                    document.getElementById('add-friend-btn').style.display = (lastFoundTargetEmail === currentUserEmail) ? 'none' : 'block';
                     showSection('timetable-section');
-                    alert(`🔍 已載入 ${friendData.profile?.username || "同學"} 的課表`);
-                } else { alert("找不到該課表"); }
-            } catch(e) { alert("搜尋出錯"); }
+                    alert(`🔍 已載入 ${targetData.profile?.username || "同學"} 的課表`);
+                } else { alert("找不到對象"); }
+            } catch(e) { alert("搜尋失敗"); }
         };
 
-        async function renderFriendStatus() {
+        window.sendFriendRequest = async () => {
+            if(!lastFoundTargetEmail) return;
+            try {
+                await updateDoc(doc(db, "schedules", lastFoundTargetEmail), {
+                    requests: arrayUnion(currentUserEmail)
+                });
+                alert("✅ 已送出好友請求！");
+            } catch(e) { alert("發送失敗"); }
+        };
+
+        function renderRequests(reqs) {
+            const container = document.getElementById('request-list-container');
+            document.getElementById('req-badge').innerText = reqs.length > 0 ? `(${reqs.length})` : "";
+            if(reqs.length === 0) { container.innerHTML = "目前沒有新的請求"; return; }
+            
+            container.innerHTML = reqs.map(email => `
+                <div class="request-item">
+                    <span>${email.split('@')[0]} 想加你好友</span>
+                    <button onclick="acceptFriend('${email}')" style="background:var(--online); color:white; padding:5px 10px;">接受</button>
+                </div>
+            `).join('');
+        }
+
+        window.acceptFriend = async (targetEmail) => {
+            try {
+                // 1. 在自己的文件中：增加好友，移除請求
+                await updateDoc(doc(db, "schedules", currentUserEmail), {
+                    friends: arrayUnion(targetEmail),
+                    requests: arrayRemove(targetEmail)
+                });
+                // 2. 在對方的文件中：增加自己為好友
+                await updateDoc(doc(db, "schedules", targetEmail), {
+                    friends: arrayUnion(currentUserEmail)
+                });
+                alert("🤝 已成為好友！");
+                refreshUserData();
+            } catch(e) { alert("處理失敗"); }
+        };
+
+        // --- 🎨 輔助功能 ---
+        async function renderFriendStatus(friends) {
             const container = document.getElementById('friend-list-container');
-            container.innerHTML = "同步中...";
             let html = "";
-            for (const email of currentFriends) {
+            for (const email of friends) {
                 const fSnap = await getDoc(doc(db, "schedules", email));
                 const fData = fSnap.exists() ? fSnap.data() : null;
                 const fUid = fData?.profile?.uid;
@@ -257,80 +300,58 @@
             }
             container.innerHTML = html || "尚未加入好友";
         }
-        window.loadByEmail = (e) => { document.getElementById('search-input').value = e; window.searchFriend(); };
 
-        // --- 💾 儲存與同步 ---
+        window.loadByEmail = (e) => { document.getElementById('search-input').value = e; window.searchFriend(); };
+        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); };
+        window.showSection = (id) => { 
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+            toggleSidebar(); 
+        };
         window.saveAllData = async () => {
-            if(!auth.currentUser) return;
-            const cells = document.querySelectorAll('#timetable-body td[data-type]');
-            const tableData = Array.from(cells).map(td => ({
+            const tableData = Array.from(document.querySelectorAll('#timetable-body td[data-type]')).map(td => ({
                 c: td.querySelector('.course-name').innerText,
                 r: td.querySelector('.room-label').innerText,
                 t: td.getAttribute('data-type')
             }));
-            await setDoc(doc(db, "schedules", auth.currentUser.email), { v6_data: tableData }, { merge: true });
-            alert("✅ 雲端同步成功！");
+            await setDoc(doc(db, "schedules", currentUserEmail), { v6_data: tableData }, { merge: true });
+            alert("✅ 同步成功！");
         };
-
         window.saveProfile = async () => {
-            await setDoc(doc(db, "schedules", auth.currentUser.email), {
-                profile: {
-                    username: document.getElementById('set-username').value,
-                    studentId: document.getElementById('set-student-id').value,
-                    uid: auth.currentUser.uid
-                }
+            await setDoc(doc(db, "schedules", currentUserEmail), {
+                profile: { username: document.getElementById('set-username').value, studentId: document.getElementById('set-student-id').value, uid: auth.currentUser.uid }
             }, { merge: true });
-            alert("✅ 個人資訊已儲存！");
+            alert("✅ 設定已儲存！");
         };
-
-        // --- 🎨 UI 輔助功能 ---
         window.cycleColor = (el) => {
             const types = ['none', 'req', 'ele', 'lab'];
             let next = types[(types.indexOf(el.getAttribute('data-type')) + 1) % types.length];
             el.setAttribute('data-type', next); el.className = 'type-' + next;
         };
-
         function fillTable(data) {
             const cells = document.querySelectorAll('#timetable-body td[data-type]');
-            data.forEach((item, idx) => {
-                if(cells[idx]) {
-                    cells[idx].querySelector('.course-name').innerText = item.c || "";
-                    cells[idx].querySelector('.room-label').innerText = item.r || "";
-                    cells[idx].setAttribute('data-type', item.t || "none");
-                    cells[idx].className = 'type-' + (item.t || "none");
-                }
-            });
+            data.forEach((item, idx) => { if(cells[idx]) {
+                cells[idx].querySelector('.course-name').innerText = item.c || "";
+                cells[idx].querySelector('.room-label').innerText = item.r || "";
+                cells[idx].setAttribute('data-type', item.t || "none");
+                cells[idx].className = 'type-' + (item.t || "none");
+            }});
         }
-
         function highlightCurrentPeriod() {
             const now = new Date(); const day = now.getDay();
             const time = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
             document.querySelectorAll('tr, td').forEach(el => el.classList.remove('highlight-now'));
             if(day >= 1 && day <= 5) {
                 const sch = ["08:10", "09:10", "10:10", "11:10", "12:10", "13:10", "14:10", "15:10", "16:10", "17:10"];
-                for(let i=0; i<sch.length; i++) {
-                    if(time >= sch[i] && time < (sch[i+1] || "18:20")) {
-                        const row = document.querySelector(`tr[data-row="${i+1}"]`);
-                        if(row) {
-                            row.querySelector('td:first-child').classList.add('highlight-now');
-                            row.querySelectorAll('td')[day].classList.add('highlight-now');
-                        }
-                    }
-                }
+                for(let i=0; i<sch.length; i++) { if(time >= sch[i] && time < (sch[i+1] || "18:20")) {
+                    const row = document.querySelector(`tr[data-row="${i+1}"]`);
+                    if(row) { row.querySelector('td:first-child').classList.add('highlight-now'); row.querySelectorAll('td')[day].classList.add('highlight-now'); }
+                }}
             }
         }
-
-        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('active'); document.getElementById('overlay').classList.toggle('active'); };
-        window.showSection = (id) => { 
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
-            document.getElementById(id).classList.add('active'); 
-            if(id === 'friends-section') renderFriendStatus();
-            toggleSidebar(); 
-        };
-        window.toggleDarkMode = () => { document.body.classList.toggle('dark-mode'); localStorage.setItem('dark-mode', document.body.classList.contains('dark-mode')); };
         window.handleLogout = () => signOut(auth).then(() => location.reload());
-
-        // 📅 初始化課表格子
+        window.toggleDarkMode = () => { document.body.classList.toggle('dark-mode'); localStorage.setItem('dark-mode', document.body.classList.contains('dark-mode')); };
+        
         const tbody = document.getElementById('timetable-body');
         for(let i=1; i<=10; i++) {
             let cells = "";
